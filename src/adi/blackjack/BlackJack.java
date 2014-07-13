@@ -8,9 +8,9 @@ import java.util.Scanner;
 import java.util.TreeMap;
 
 /**
- * The Blackjack class provides the implementation for a game of blackjack. The class
- * contains implementation of methods to start a new game, set up a new game and play 
- * a hand in the game. 
+ * The Blackjack class provides the implementation for a game of blackjack. The
+ * class contains implementation of methods to start a new game, set up a new
+ * game and play a hand in the game.
  * 
  * @author Aditya
  * @version 1.0
@@ -28,7 +28,7 @@ public class BlackJack {
 	public BlackJack() throws FileNotFoundException {
 		player = new Player(Constants.STARTING_NUMBER_OF_CHIPS);
 		dealer = new Dealer(Constants.NUM_DECKS);
-//		dealer = new Dealer(true); // devMode ONLY!
+		// dealer = new Dealer(true); // devMode ONLY!
 	}
 
 	// Play a new game. Display welcome message and get user to input bet value
@@ -36,40 +36,47 @@ public class BlackJack {
 		String inputVal = "";
 		System.out.println(Constants.WELCOME_MESSAGE);
 		while (true) {
-			System.out.println(Constants.BET_MESSAGE + player.getNumChips());
-			inputVal = inputScanner.nextLine();
-			if ((inputVal.length() == 1)
-					&& (inputVal.charAt(0) == Constants.ACTION_KEY_QUIT))
-				break;
+			if (player.getNumChips() >= Constants.MIN_BET_CHIPS) {
+				System.out
+						.println(Constants.BET_MESSAGE + player.getNumChips());
+				inputVal = inputScanner.nextLine();
+				if ((inputVal.length() == 1)
+						&& (inputVal.charAt(0) == Constants.ACTION_KEY_QUIT))
+					break;
 
-			if (inputVal.equals("")) {
-				betChips = 1;
-			} else {
-				try {
-					betChips = Float.parseFloat(inputVal);
-				} catch (NumberFormatException nfe) {
-					System.out.println("Unrecognized number " + inputVal);
+				if (inputVal.equals("")) {
+					betChips = 1;
+				} else {
+					try {
+						betChips = Float.parseFloat(inputVal);
+					} catch (NumberFormatException nfe) {
+						System.out.println("Unrecognized number " + inputVal);
+						continue;
+					}
+				}
+
+				// invalid bet amount
+				if (betChips < Constants.MIN_BET_CHIPS
+						|| betChips > player.getNumChips()) {
+					System.out.println("Invalid bet size: " + betChips);
+					System.out.println("Bet must be between "
+							+ Constants.MIN_BET_CHIPS + " and "
+							+ player.getNumChips());
 					continue;
 				}
+				System.out.println("Your bet: " + betChips + " chip(s)\n");
+				newHand();
+				playAllHands();
+				calculateWinnings();
+			} else {
+				System.out
+						.println("\n *** You do not have enough chips to play another round! ***\n");
+				break;
 			}
 
-			//invalid bet amount
-			if (betChips < Constants.MIN_BET_CHIPS
-					|| betChips > player.getNumChips()) {
-				System.out.println("Invalid bet size: " + betChips);
-				System.out.println("Bet must be between "
-						+ Constants.MIN_BET_CHIPS + " and "
-						+ player.getNumChips());
-				continue;
-			}
-			System.out.println("Your bet: " + betChips + " chip(s)\n");
-			newHand();
-			playAllHands();
-			calculateWinnings();
 		}
 		inputScanner.close();
 	}
-
 
 	// Create a new hand. This method is called before beginning a new round.
 	private void newHand() {
@@ -85,14 +92,16 @@ public class BlackJack {
 		dealer.takeCard(dealer.dealCard());
 	}
 
-	
-	/* Playing a hand. The game begins with the first hand of the player and continues
-	* till the player busts or stands/surrenders. If there is another hand the method
-	* processes each of them sequentially rather than in parallel. */ 
+	/*
+	 * Playing a hand. The game begins with the first hand of the player and
+	 * continues till the player busts or stands/surrenders. If there is another
+	 * hand the method processes each of them sequentially rather than in
+	 * parallel.
+	 */
 	private void playAllHands() {
 		int handsIndex = 0;
 
-		//Start with hand 0 of the player;
+		// Start with hand 0 of the player;
 		while (handsIndex < player.getPlayerHand().size()) {
 			// while current hand is not finished keep looping
 			while (!player.getPlayerHand().get(handsIndex).isHandFinished()) {
@@ -110,7 +119,7 @@ public class BlackJack {
 					System.out.println(dealer.getDealerHand().showTopCard());
 
 					System.out.print("Choose an option: ");
-					
+
 					// Display all available options
 					Collection<String> optionValues = getCurrentHandOptions(
 							currentHand).values();
@@ -121,7 +130,7 @@ public class BlackJack {
 					System.out.println();
 					System.out.println();
 
-					//read input
+					// read input
 					command = inputScanner.nextLine();
 
 					if (command.length() != 1) {
@@ -142,13 +151,15 @@ public class BlackJack {
 							currentHand.surrender();
 							break;
 						case Constants.ACTION_KEY_DOUBLE_DOWN:
-							currentHand.doubleDown(player.getNumChips(), betChips);
+							currentHand.doubleDown(player.getNumChips(),
+									betChips);
 							betChips = betChips * 2;
 							break;
 						case Constants.ACTION_KEY_SPLIT:
 							player.split(player.getPlayerHand().get(handsIndex));
 							currentHand.addCard(dealer.dealCard());
-							player.getPlayerHand().get(handsIndex+1).addCard(dealer.dealCard());
+							player.getPlayerHand().get(handsIndex + 1)
+									.addCard(dealer.dealCard());
 							break;
 						}
 					} else {
@@ -161,11 +172,10 @@ public class BlackJack {
 			handsIndex++;
 			System.out.println("\nHand complete!\n");
 		}
-		//once all hands are finished, dealer hits until 17
+		// once all hands are finished, dealer hits until 17
 		dealer.playoutHand();
 	}
 
-	
 	private void calculateWinnings() {
 		int k = 0;
 		for (Iterator<Hand> i = player.getPlayerHand().iterator(); i.hasNext();) {
@@ -192,11 +202,11 @@ public class BlackJack {
 
 	private float getGameChips(Hand playerHand, Hand dealerHand, float betChips) {
 		// player surrendered and dealer does not have a blackjack
-		if (playerHand.isHandSurrendered() && !dealerHand.isBlackJack()) 
+		if (playerHand.isHandSurrendered() && !dealerHand.isBlackJack())
 			return -betChips / 2;
 
 		// both player and dealer bust - player loses
-		if (playerHand.isHandBust() && dealerHand.isHandBust()) 
+		if (playerHand.isHandBust() && dealerHand.isHandBust())
 			return -betChips;
 
 		// player bust or value of player card < value of dealer cards
@@ -205,9 +215,9 @@ public class BlackJack {
 						.valueOfCards())) {
 			return -betChips;
 		}
-		
+
 		// dealer bust or value of player cards > value of dealer cards
-		if (dealerHand.isHandBust()  
+		if (dealerHand.isHandBust()
 				|| playerHand.valueOfCards() > dealerHand.valueOfCards()) {
 			if (playerHand.isBlackJack()) // player has blackjack (Ace and
 				// ten-value card)
@@ -215,10 +225,11 @@ public class BlackJack {
 			else
 				return betChips;
 		}
-		
+
 		if (playerHand.valueOfCards() == dealerHand.valueOfCards()) {
 			if (playerHand.isBlackJack() && !dealerHand.isBlackJack())
-				return 3 * betChips / 2; // player has blackjack and dealer doesn't
+				return 3 * betChips / 2; // player has blackjack and dealer
+											// doesn't
 			else
 				return 0; // is a push
 		}
